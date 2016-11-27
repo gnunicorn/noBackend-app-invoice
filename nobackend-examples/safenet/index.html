@@ -12,7 +12,11 @@
 
   <body>
     <!-- invoice to be rendered in here -->
-  	<div class="invoiceSheet"></div>
+  	<div class="invoiceSheet">
+     <h1>Trying to login ...</h1>
+     <p>Please make sure you have SAFE launcher running and give this app Permission to write to the Network</p>
+     <p><a href="#" onclick="document.location.href = document.location.href">Refresh</a> to try again.</p> 
+    </div>
 
     <div class="footerBar actionBar notPartOfInvoice">
       <div class="buttons">
@@ -24,7 +28,7 @@
           <ul class="invoiceList dropdown-menu pull-right"></ul>
         </span>
 
-        <span class="btn-group dropup">
+        <!-- <span class="btn-group dropup">
           <button class="download btn btn-inverse btn-small" data-action="download"><i class="icon-white icon-download-alt"></i> Download</button>
           <button class="btn btn-small btn-inverse dropdown-toggle" data-toggle="dropdown">
             <i class="caret"></i>
@@ -34,48 +38,24 @@
               <li>
                 <a data-action="send">
                   <i class="icon-envelope"></i>
-                  Email
+                  Share (not implemented yet)
                 </a>
               </li>
               <li>
                 <a data-action="deleteInvoice">
                   <i class="icon-trash"></i>
-                  Delete
+                  Delete (not implemeted yet)
                 </a>
               </li>
             </li>
           </ul>
-        </span>
+        </span> -->
 
         <div class="accountbar">
           <div class="account-signedout">
-            <span class="btn-group dropup">
-              <button class="btn btn-small btn-inverse" data-action="signup">Sign Up</button>
-              <button class="btn btn-small dropdown-toggle btn-inverse" data-toggle="dropdown">
-                <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu pull-right">
-                <li><a href="#" data-action="signin">Sign In</a></li>
-                <li><a href="#" data-action="resetpassword">Reset Password</a></li>
-                <li><a href="#" data-action="destroy">Clear local data</a></li>
-              </ul>
-            </span>
           </div><!-- /.account-signedout -->
 
           <div class="account-signedin">
-            Hello,
-            <span class="username"><!-- usern name will be filled in here --></span>
-            <span class="btn-group dropup">
-              <button class="btn btn-small btn-inverse" data-action="signout">Sign Out</button>
-              <button class="btn btn-small dropdown-toggle btn-inverse" data-toggle="dropdown">
-                <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu pull-right">
-                <li><a href="#" data-action="changepassword">Change Password</a></li>
-                <li><a href="#" data-action="changeusername">Change Username</a></li>
-                <li><a href="#" data-action="destroy">Destroy Account</a></li>
-              </ul>
-            </span>
           </div><!-- /.account-signedin -->
 
           <div class="account-error">

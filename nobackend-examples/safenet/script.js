@@ -16,6 +16,18 @@
 // to allow for a nice, chainable API, each method returns
 // a promise. 
 // 
+
+// accept only on safe and/or localhost
+if (document.location.protocol !== 'safe:') {
+  if (document.location.hostname !== 'localhost') {
+    alert("You need to run this within the SAFE browser!");
+    document.getElementsByClassName('invoiceSheet')[0].innerHTML = document.getElementById('redirectToSafe').innerHTML;
+    document.getElementsByClassName('footerBar')[0].innerHTML = '';
+    throw("Unsupported Error")
+  }
+}
+
+
 var _promise = function () {
   var defer = $.Deferred()
   defer.resolve.apply( defer, arguments )

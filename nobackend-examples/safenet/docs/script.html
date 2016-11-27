@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>script.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>script.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>This file implements the “Dreamcode” of the
+invoice app for the SAFE Netwok. It contains all the logic needed
+to make the static HTML app a full stack application,
+including user accounts, data synchronization and
+sending emails.</p>
+<p>It’s meant to be used as a scaffold for noBackend
+solutions, no implement its logic and making the app’s
+functionality real.</p>
+<p>See also:</p>
+<ul>
+<li><a href="http://www.safedev.org">http://www.safedev.org</a></li>
+<li><a href="http://tutorials.safedev.org">http://tutorials.safedev.org</a></li>
+<li><a href="http://api.safedev.org">http://api.safedev.org</a></li>
+</ul>
+<p>to allow for a nice, chainable API, each method returns
+a promise. </p>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>Globals
+Here we store the access token</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> accessToken;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>and define our App information for authentication</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> app = {
+    <span class="hljs-attr">name</span>: <span class="hljs-string">"safejs-nobackend-invoice-example"</span>,
+    <span class="hljs-attr">id</span>: <span class="hljs-string">"net.maidsafe.examples.nobackend-invoice"</span>,
+    <span class="hljs-attr">version</span>: <span class="hljs-string">"2016-11-27"</span>, <span class="hljs-comment">// using the date for version</span>
+    vendor: <span class="hljs-string">"Benjamin Kampmann"</span>,
+    <span class="hljs-attr">permissions</span>: [<span class="hljs-string">"SAFE_DRIVE_ACCESS"</span>]
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>If we are not hosted on SAFE
+and not running on localhost, we’ll show the error message</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.location.protocol !== <span class="hljs-string">'safe:'</span>) {
+  <span class="hljs-keyword">if</span> (<span class="hljs-built_in">document</span>.location.hostname !== <span class="hljs-string">'localhost0'</span>) {
+    alert(<span class="hljs-string">"You need to run this within the SAFE browser!"</span>);
+    <span class="hljs-keyword">var</span> errMsg = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'redirectToSafe'</span>).innerHTML;
+    <span class="hljs-built_in">document</span>.getElementsByClassName(<span class="hljs-string">'invoiceSheet'</span>)[<span class="hljs-number">0</span>].innerHTML = errMsg;
+    <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">'invoiceBtn'</span>).innerHTML = <span class="hljs-string">''</span>;
+    <span class="hljs-keyword">throw</span>(<span class="hljs-string">"Unsupported Error"</span>)
+  }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>A helper function that wraps our promises
+into a jquery-style Deferred as the API requires it</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">wrapPromise</span>(<span class="hljs-params">prms</span>) </span>{
+  <span class="hljs-keyword">var</span> defer = $.Deferred();
+  prms.then(defer.resolve,
+            defer.reject)
+  <span class="hljs-keyword">return</span> defer;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>data store dreamcode</p>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>In DreamCode, every object has at least a <code>type</code> and an <code>id</code>-field. WSo we’ll use those
+to organise our data, where we have one folder per <code>type</code> and then store each items as
+stringified json file under <code>${type}/${id}.json</code>. Thus we can only use the usual NFS system
+easily to provide the full API required</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+<span class="hljs-keyword">var</span> store = {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>entry point to the app: tries to fetch all data</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  findAll : <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">type</span>) </span>{
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">fetch</span>(<span class="hljs-params"></span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>let’s fetch the folder of <code>type</code> and read all its files
+we assume there is nothing else in there than stuff we stored before</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">return</span> wrapPromise(safeNFS.getDir(accessToken, <span class="hljs-string">""</span> + type).then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">dir</span>) </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.all(dir.files.map(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">file</span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>then return that list json-prased objects</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">return</span> safeNFS.getFile(accessToken, type + <span class="hljs-string">'/'</span> + file.name, <span class="hljs-string">'text'</span>)
+            .then(<span class="hljs-built_in">JSON</span>.parse.bind(<span class="hljs-built_in">JSON</span>));
+      }));
+    }, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err</span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>we just <em>assume</em> the directory isn’t existing yet, so we create it</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-built_in">console</span>.warn(err);
+      <span class="hljs-keyword">return</span> safeNFS.createDir(accessToken, <span class="hljs-string">""</span>+ type).then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{ <span class="hljs-keyword">return</span> [] });
+    }));
+
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>so if it isn’t logged in yet, we try to authenticate and then fetch or
+otherwise fetch directly</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (!accessToken) <span class="hljs-keyword">return</span> account._signIn().then(fetch);
+
+    <span class="hljs-keyword">return</span> fetch();
+  },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>add a new or update an existing object</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  save : <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">object</span>) </span>{
+    <span class="hljs-keyword">if</span> (!accessToken) <span class="hljs-keyword">return</span> $.Deferred().reject(<span class="hljs-string">"You need to login first"</span>);
+    <span class="hljs-keyword">return</span> wrapPromise(safeNFS.createOrUpdateFile(
+      accessToken,
+      object.type + <span class="hljs-string">'/'</span> + object.id + <span class="hljs-string">".json"</span>,
+      <span class="hljs-built_in">JSON</span>.stringify(object)
+    ));
+  }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>account dreamcode</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> account = {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>internal function as we also want to call it from the
+Store</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  _signIn: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> safeAuth.authorise(app).then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">resp</span>)</span>{
+      accessToken = resp.token;
+      App.renderUserSignedIn();
+    });
+  },
+  <span class="hljs-attr">signUp</span> : <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"> username, password </span>) </span>{
+    <span class="hljs-keyword">return</span> wrapPromise(account._signIn());
+  },
+  <span class="hljs-attr">signIn</span> : <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"> username, password </span>) </span>{
+    <span class="hljs-keyword">return</span> account.signUp();
+  },
+  <span class="hljs-attr">signOut</span> : <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    accessToken = <span class="hljs-literal">null</span>;
+    <span class="hljs-keyword">return</span> $.Deferred().resolve(object).promise();
+  }
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

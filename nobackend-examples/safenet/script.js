@@ -22,6 +22,13 @@ var _promise = function () {
   return defer.promise()
 }
 
+function wrapPromise(prms) {
+  var defer = $.Deferred();
+  prms.then(defer.resolve,
+            defer.reject)
+  return defer;
+}
+
 
 var accessToken;
 
@@ -31,16 +38,37 @@ var accessToken;
 var store = {
 
   findAll : function(type) {
-    if (!accessToken) return $.Deferred().reject("You need to login first");
-    console.log("store.findAll", type)
-    return _promise([])
+    function fetch() {
+
+    return wrapPromise(safeNFS.getDir(accessToken, "" + type).then(function(dir) {
+      console.log("found dir", dir)
+      return Promise.all(dir.files.map(function(file) {
+        console.log("found", file)
+        return safeNFS.getFile(accessToken, type + '/' + file.name, 'text').then(JSON.parse.bind(JSON));
+      }));
+    }, function(err) {
+      // we just _assume_ the directory isn't existing yet
+      // create it
+      console.warn(err);
+      return safeNFS.createDir(accessToken, ""+ type).then(function() { return [] });
+    }));
+
+    }
+
+    if (!accessToken) return account._signIn().then(fetch);
+
+    return fetch();
   },
 
   // add a new or update an existing object
   save : function(object) {
+    console.log(object)
     if (!accessToken) return $.Deferred().reject("You need to login first");
-    console.log("store.save: ", object)
-    return _promise(object)
+    return wrapPromise(safeNFS.createOrUpdateFile(
+      accessToken,
+      object.type + '/' + object.id + ".json",
+      JSON.stringify(object)
+    ));
   },
 
   // remove object from store
@@ -51,19 +79,30 @@ var store = {
   }
 }
 
+var app = {
+    name: "safejs-nobackend-invoice-example",
+    id: "net.maidsafe.examples.nobackend-invoice",
+    version: "2016-11-27",
+    vendor: "Benjamin Kampmann",
+    permissions: ["SAFE_DRIVE_ACCESS"]
+};
+
 
 // 
 // account dreamcode
 // 
 var account = {
+  _signIn: function () {
+    return safeAuth.authorise(app).then(function(resp){
+      accessToken = resp.token;
+      App.renderUserSignedIn();
+    });
+  },
   signUp : function( username, password ) {
-    alert("You need to sign up with SAFE Launcher");
-    return $.Deferred().reject(false);
+    return wrapPromise(account._signIn());
   },
   signIn : function( username, password ) {
-    console.log("account.signIn: ", username, password)
-    App.renderUserSignedIn()
-    return _promise(username)
+    return account.signUp();
   },
   signOut : function() {
     accessToken = null;
